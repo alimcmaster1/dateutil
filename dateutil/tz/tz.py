@@ -186,8 +186,25 @@ class tzoffset(datetime.tzinfo):
 
     __reduce__ = object.__reduce__
 
+class tzlocalsingleton(type):
 
-class tzlocal(_tzinfo):
+    """
+    A :class: `tzlocalsingleton` metaclass returns same instance of object for the same tz
+    """
+    _tz = None
+    _instance = None
+
+    def __call__(cls, *args, **kwargs):
+        current_tz = time.tzname
+        if cls._instance is None or cls._tz != current_tz:
+            cls._tz = current_tz
+            cls._instance = super(tzlocalsingleton, cls).__call__(*args, **kwargs)
+            return cls._instance
+        elif cls._tz == current_tz:
+            return cls._instance
+
+
+class tzlocal(_tzinfo, metaclass=tzlocalsingleton):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
     """
